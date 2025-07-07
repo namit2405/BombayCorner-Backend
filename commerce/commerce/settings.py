@@ -152,3 +152,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 # settings.py
 SITE_NAME = "MyShop"  # Replace "MyShop" with your actual site name
+
+# settings.py
+RAZORPAY_KEY_ID = "rzp_live_Jbk3aa1rEDJ5cG"
+RAZORPAY_KEY_SECRET = "QpEHvJDUIwHceqwECHr6aRVm"

@@ -18,6 +18,7 @@ urlpatterns = [
    path('cart/remove/<int:item_id>/',views.RemoveCartItemView.as_view(),name='cart-remove'),
    path('cart/detail/',views.CartDetailView.as_view(),name='cart-detail'),
    path('checkout/',views.CheckoutAPIView.as_view(),name="checkout"),
+   path('create-razorpay-order/', views.CreateRazorpayOrderAPIView.as_view(), name='create-razorpay-order'),
    path('order/status/<int:order_id>/',views.OrderStatus.as_view(),name="order-status"),
    path('order/history/',views.OrderHistory.as_view(),name='order-history'),
    path('order/<int:order_id>/cancel/', views.CancelOrderAPIView.as_view(), name='cancel-order'),

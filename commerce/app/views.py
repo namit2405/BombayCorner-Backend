@@ -22,6 +22,14 @@ from django.conf import settings
 from rest_framework.generics import RetrieveAPIView
 import random
 from django.core.cache import cache
+from django.conf import settings
+import razorpay
+from razorpay import Client, Utility
+from razorpay.errors import SignatureVerificationError
+
+RAZORPAY_KEY_ID = settings.RAZORPAY_KEY_ID
+RAZORPAY_KEY_SECRET = settings.RAZORPAY_KEY_SECRET
+
 
 class SendOTPView(APIView):
     def post(self, request):
@@ -250,91 +258,134 @@ class CartDetailView(APIView):
 
 class CheckoutAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    
-    def post(self,request):
-        try:
-            cart = Cart.objects.get(user = request.user)
-        except Cart.DoesNotExist:
-            return Response({
-                "error" : "Cart is empty"
-            },status = status.HTTP_404_BAD_REQUEST)
 
-        cart_items = CartItem.objects.filter(cart = cart)
-        if not cart_items.exists():
-            return Response({
-                "error" : "Cart is empty"
-            },status = status.HTTP_400_BAD_REQUEST)
-
-        total = 0
-        for item in cart_items:
-            total += item.products.price * item.quantity
-        
+    def post(self, request):
+        # ✅ Extract payment details
+        razorpay_payment_id = request.data.get("razorpay_payment_id")
+        razorpay_order_id = request.data.get("razorpay_order_id")
+        razorpay_signature = request.data.get("razorpay_signature")
         address = request.data.get("address")
+
+        # ✅ Validate fields
+        if not all([razorpay_payment_id, razorpay_order_id, razorpay_signature]):
+            return Response({"error": "Missing payment details"}, status=status.HTTP_400_BAD_REQUEST)
         if not address:
-            return Response({"error":"Address is required"},status = status.HTTP_400_BAD_REQUEST)
-        
+            return Response({"error": "Address is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Verify payment signature
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        try:
+            client.utility.verify_payment_signature({
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_payment_id': razorpay_payment_id,
+                'razorpay_signature': razorpay_signature,
+            })
+        except SignatureVerificationError:
+            return Response({"error": "Invalid payment signature"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Fetch user's cart
+        try:
+            cart = Cart.objects.get(user=request.user)
+        except Cart.DoesNotExist:
+            return Response({"error": "Cart not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        cart_items = CartItem.objects.filter(cart=cart)
+        if not cart_items.exists():
+            return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Calculate total with delivery charge
+        total = sum(item.products.price * item.quantity for item in cart_items)
+        if total <= 4000:
+            total += 150
+
+        # ✅ Create Order
         order = Order.objects.create(
-            user = request.user,
-            cart = cart,
-            total_amount = total,
-            address = address,
-            payment = "Confirmed",
-            status = 'Confirmed',
+            user=request.user,
+            cart=cart,
+            total_amount=total,
+            address=address,
+            payment="Confirmed",
+            status="Confirmed",
         )
-        
+
+        # ✅ Create OrderItems
         for item in cart_items:
             OrderItem.objects.create(
-                order = order,
-                product = item.products,
-                quantity = item.quantity
+                order=order,
+                product=item.products,
+                quantity=item.quantity
             )
-        
+
+        # ✅ Clear cart
         cart_items.delete()
+
+        # ✅ Send email to user
         subject = f"Order Confirmation - Order #{order.id}"
         message = (
             f"Dear {request.user.first_name},\n\n"
             f"Thank you for shopping with us!\n\n"
-            f"Here are your order details:\n"
             f"Order ID: {order.id}\n"
-            f"Order Date: {order.ordered_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
             f"Total Amount: ₹{order.total_amount}\n"
-            f"Shipping Address: {order.address}\n\n"
-            f"We will notify you once your order is shipped.\n\n"
-            f"If you have any questions, feel free to contact us at {settings.DEFAULT_FROM_EMAIL}.\n\n"
-            f"Thank you for choosing us!\n\n"
-            f"Best Regards,\n"
-            f"The {settings.SITE_NAME} Team"
+            f"Address: {order.address}\n\n"
+            f"We will notify you when your order ships.\n\n"
+            f"Best regards,\n"
+            f"{settings.SITE_NAME} Team"
         )
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [request.user.email], fail_silently=False)
 
+        # ✅ Send email to admin
         send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,         # Sender
-            [order.user.email],                  # Recipient
+            subject=f"🔔 New Order Received - Order #{order.id}",
+            message=(
+                f"A new order has been placed.\n\n"
+                f"Customer: {request.user.username} ({request.user.email})\n"
+                f"Order ID: {order.id}\n"
+                f"Total: ₹{order.total_amount}\n"
+                f"Address: {order.address}"
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=["jainnamit34@gmail.com"],
             fail_silently=False,
         )
-        
-        send_mail(
-    subject=f"🔔 New Order Received - Order #{order.id}",
-    message=(
-        f"A new order has been placed on your store.\n\n"
-        f"Customer: {request.user.username} ({request.user.email})\n"
-        f"Order ID: {order.id}\n"
-        f"Total: ₹{order.total_amount}\n"
-        f"Address: {order.address}\n\n"
-        f"Please check your admin dashboard for details."
-    ),
-    from_email=settings.DEFAULT_FROM_EMAIL,
-    recipient_list=["jainnamit34@gmail.com"],  # ✅ correct
-    fail_silently=False,
-)
 
-        
-        
-
-        
         serializer = OrderSerializer(order)
-        return Response({"message":"Order Placed Successfully","order":serializer.data},status=status.HTTP_201_CREATED)
+        return Response({"message": "Order Placed Successfully", "order": serializer.data}, status=status.HTTP_201_CREATED)
+    
+
+class CreateRazorpayOrderAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            cart = Cart.objects.get(user=request.user)
+        except Cart.DoesNotExist:
+            return Response({"error": "Cart is empty"}, status=status.HTTP_404_NOT_FOUND)
+
+        cart_items = CartItem.objects.filter(cart=cart)
+        if not cart_items.exists():
+            return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+        total = sum(item.products.price * item.quantity for item in cart_items)
+
+        # Delivery charge
+        if total < 4000:
+            total += 150
+
+        client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+        payment = client.order.create({
+            "amount": total * 100,  # in paisa
+            "currency": "INR",
+            "payment_capture": 1
+        })
+
+        return Response({
+            "order_id": payment["id"],
+            "amount": payment["amount"],
+            "currency": payment["currency"],
+            "key": RAZORPAY_KEY_ID,
+        })
+
+
     
 class OrderStatus(APIView):
     permission_classes = [IsAuthenticated]
