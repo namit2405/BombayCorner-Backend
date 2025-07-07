@@ -27,8 +27,8 @@ import razorpay
 from razorpay import Client, Utility
 from razorpay.errors import SignatureVerificationError
 
-RAZORPAY_KEY_ID = settings.RAZORPAY_KEY_ID
-RAZORPAY_KEY_SECRET = settings.RAZORPAY_KEY_SECRET
+# RAZORPAY_KEY_ID = settings.RAZORPAY_KEY_ID
+# RAZORPAY_KEY_SECRET = settings.RAZORPAY_KEY_SECRET
 
 
 class SendOTPView(APIView):
@@ -368,12 +368,14 @@ class CreateRazorpayOrderAPIView(APIView):
         total = sum(item.products.price * item.quantity for item in cart_items)
 
         # Delivery charge
-        if total < 4000:
-            total += 150
+        delivery_charge = 150 if total < 4000 else 0
+        grand_total = total + delivery_charge
+        
+        final_amount = grand_total * 100
 
-        client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         payment = client.order.create({
-            "amount": total * 100,  # in paisa
+            "amount": final_amount,
             "currency": "INR",
             "payment_capture": 1
         })
@@ -382,8 +384,8 @@ class CreateRazorpayOrderAPIView(APIView):
             "order_id": payment["id"],
             "amount": payment["amount"],
             "currency": payment["currency"],
-            "key": RAZORPAY_KEY_ID,
-        })
+            "key": settings.RAZORPAY_KEY_ID,
+        }, status=status.HTTP_201_CREATED)
 
 
     
