@@ -372,6 +372,11 @@ class CreateRazorpayOrderAPIView(APIView):
         grand_total = total + delivery_charge
         
         final_amount = grand_total * 100
+        
+        print(f"User: {request.user.username}")
+        print(f"Cart total: {total}, Delivery Charge: {delivery_charge}, Grand Total: {grand_total}")
+        print(f"Creating Razorpay order with amount: {final_amount}")
+
 
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         payment = client.order.create({

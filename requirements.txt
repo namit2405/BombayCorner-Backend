@@ -7,3 +7,4 @@ pillow==11.2.1
 sqlparse==0.5.3
 whitenoise==6.9.0
 RapidFuzz==3.13.0
+razorpay==1.4.2
