@@ -149,7 +149,7 @@ EMAIL_HOST_PASSWORD = 'ofpz psiv bfxx sqxb'  # use app password if 2FA is enable
 
 CORS_ALLOWED_ORIGINS = [
     "https://namits.shop",
-    "www.namits.shop"# your frontend URL
+    "https://www.namits.shop"# your frontend URL
 ]
 # settings.py
 SITE_NAME = "MyShop"  # Replace "MyShop" with your actual site name
