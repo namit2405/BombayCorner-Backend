@@ -377,13 +377,16 @@ class CreateRazorpayOrderAPIView(APIView):
         print(f"Cart total: {total}, Delivery Charge: {delivery_charge}, Grand Total: {grand_total}")
         print(f"Creating Razorpay order with amount: {final_amount}")
 
-
-        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-        payment = client.order.create({
-            "amount": final_amount,
-            "currency": "INR",
-            "payment_capture": 1
-        })
+        try:
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+            payment = client.order.create({
+                "amount": final_amount,
+                "currency": "INR",
+                "payment_capture": 1
+            })
+        except Exception as e:
+            print(f"Razorpay error: {str(e)}")
+            return Response({"error": "Failed to create Razorpay order", "details": str(e)}, status=500)
 
         return Response({
             "order_id": payment["id"],
