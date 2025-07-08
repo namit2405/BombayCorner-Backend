@@ -152,7 +152,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://www.namits.shop",# your frontend URL
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_ALL_ORIGINS = True
 
 
 # settings.py
