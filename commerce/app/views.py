@@ -26,6 +26,7 @@ from django.conf import settings
 import razorpay
 from razorpay import Client, Utility
 from razorpay.errors import SignatureVerificationError
+from decimal import Decimal
 
 # RAZORPAY_KEY_ID = settings.RAZORPAY_KEY_ID
 # RAZORPAY_KEY_SECRET = settings.RAZORPAY_KEY_SECRET
@@ -365,13 +366,13 @@ class CreateRazorpayOrderAPIView(APIView):
         if not cart_items.exists():
             return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
-        total = sum(item.products.price * item.quantity for item in cart_items)
+        total = sum(float(item.products.price) * item.quantity for item in cart_items)
 
         # Delivery charge
         delivery_charge = 150 if total < 4000 else 0
         grand_total = total + delivery_charge
         
-        final_amount = grand_total * 100
+        final_amount = int(grand_total * 100)
         
         print(f"User: {request.user.username}")
         print(f"Cart total: {total}, Delivery Charge: {delivery_charge}, Grand Total: {grand_total}")
