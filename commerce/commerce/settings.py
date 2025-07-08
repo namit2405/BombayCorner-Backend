@@ -151,6 +151,10 @@ CORS_ALLOWED_ORIGINS = [
     "https://namits.shop",
     "https://www.namits.shop",# your frontend URL
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+
 # settings.py
 SITE_NAME = "MyShop"  # Replace "MyShop" with your actual site name
 
