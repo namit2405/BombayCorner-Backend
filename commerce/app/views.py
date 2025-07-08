@@ -369,7 +369,8 @@ class CreateRazorpayOrderAPIView(APIView):
         total = sum(float(item.products.price) * item.quantity for item in cart_items)
 
         # Delivery charge
-        delivery_charge = 150 if total < 4000 else 0
+        # delivery_charge = 150 if total < 4000 else 0
+        delivery_charge = 0
         grand_total = total + delivery_charge
         
         final_amount = int(grand_total * 100)
