@@ -366,7 +366,7 @@ class CreateRazorpayOrderAPIView(APIView):
         if not cart_items.exists():
             return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
-        total = sum(float(item.products.price) * item.quantity for item in cart_items)
+        total = sum(float(item.products.price - item.products.discount_price) * item.quantity for item in cart_items)
 
         # Delivery charge
         # delivery_charge = 150 if total < 4000 else 0
