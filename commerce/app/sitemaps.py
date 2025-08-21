@@ -1,5 +1,5 @@
 from django.contrib.sitemaps import Sitemap
-from .models import Product, Category
+from .models import Product, Categories
 
 
 # ✅ 1. React Frontend Static Pages
@@ -47,7 +47,7 @@ class CategorySitemap(Sitemap):
     priority = 0.7
 
     def items(self):
-        return Category.objects.all()
+        return Categories.objects.all()
 
     def location(self, obj):
         return f"/categories/{obj.id}/"
