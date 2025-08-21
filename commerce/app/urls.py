@@ -1,6 +1,15 @@
 from django.urls import path
 from . import views
 from rest_framework.authtoken.views import obtain_auth_token
+from django.contrib.sitemaps.views import sitemap
+from .sitemaps import StaticReactSitemap, ProductSitemap, CategorySitemap
+
+sitemaps = {
+   "static-react": StaticReactSitemap,
+   "products": ProductSitemap,
+   "categories": CategorySitemap,
+}
+
 urlpatterns = [
    path('', views.home, name="home"), 
    path('signup/',views.SignupView.as_view(),name='signup'),
