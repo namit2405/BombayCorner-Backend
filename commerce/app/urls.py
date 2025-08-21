@@ -1,14 +1,6 @@
 from django.urls import path
 from . import views
 from rest_framework.authtoken.views import obtain_auth_token
-from django.contrib.sitemaps.views import sitemap
-from .sitemaps import StaticReactSitemap, ProductSitemap, CategorySitemap
-
-sitemaps = {
-   "static-react": StaticReactSitemap,
-   "products": ProductSitemap,
-   "categories": CategorySitemap,
-}
 
 urlpatterns = [
    path('', views.home, name="home"), 
@@ -38,6 +30,5 @@ urlpatterns = [
    path('user/profile/', views.UserProfileDetail.as_view(), name='user-profile'),
    path('send-otp/', views.SendOTPView.as_view()),
    path('verify-otp/', views.VerifyOTPView.as_view()),
-   path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
 ]
 
