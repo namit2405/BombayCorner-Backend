@@ -38,5 +38,6 @@ urlpatterns = [
    path('user/profile/', views.UserProfileDetail.as_view(), name='user-profile'),
    path('send-otp/', views.SendOTPView.as_view()),
    path('verify-otp/', views.VerifyOTPView.as_view()),
+   path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
 ]
 
