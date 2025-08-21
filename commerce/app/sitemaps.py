@@ -1,8 +1,6 @@
 from django.contrib.sitemaps import Sitemap
 from .models import Product, Categories
 
-FRONTEND_DOMAIN = "https://namits.shop"  # 👈 your real frontend
-
 
 # ✅ 1. React Frontend Static Pages
 class StaticReactSitemap(Sitemap):
@@ -10,15 +8,25 @@ class StaticReactSitemap(Sitemap):
     priority = 0.6
 
     def items(self):
+        # Add all your React frontend routes here
         return [
-            "", "products", "categories", "about", "contact",
-            "cart", "wishlist", "profile", "edit-profile",
-            "order/history", "help", "login", "signup"
+            "/",                # Home
+            "/products",        # Products listing
+            "/categories",      # Categories page
+            "/about",           # About page
+            "/contact",         # Contact page
+            "/cart",            # Cart page
+            "/wishlist",        # Wishlist
+            "/profile",         # User Profile
+            "/edit-profile",    # Edit Profile
+            "/order/history",   # Order history
+            "/help",            # Customer Service chatbot/FAQ
+            "/login",           # Login
+            "/signup",          # Signup
         ]
 
     def location(self, item):
-        return f"{FRONTEND_DOMAIN}/{item}" if item else FRONTEND_DOMAIN
-
+        return item
 
 
 # ✅ 2. Products Sitemap (from DB)
@@ -30,7 +38,7 @@ class ProductSitemap(Sitemap):
         return Product.objects.all()
 
     def location(self, obj):
-        return f"{FRONTEND_DOMAIN}/products/{obj.id}/"
+        return f"/products/{obj.id}/"   # React frontend product detail page
 
 
 # ✅ 3. Categories Sitemap (from DB)
@@ -42,4 +50,4 @@ class CategorySitemap(Sitemap):
         return Categories.objects.all()
 
     def location(self, obj):
-        return f"{FRONTEND_DOMAIN}/categories/{obj.id}/"
+        return f"/categories/{obj.id}/"
